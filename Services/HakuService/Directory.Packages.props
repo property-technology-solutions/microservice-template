@@ -5,10 +5,10 @@
 
   <ItemGroup>
     <!-- Enterprise BuildingBlocks (Internal NuGet Feed) -->
-    <PackageVersion Include="Enterprise.BuildingBlocks.Domain" Version="2.1.0" />
-    <PackageVersion Include="Enterprise.BuildingBlocks.Application" Version="2.1.0" />
-    <PackageVersion Include="Enterprise.BuildingBlocks.Infrastructure" Version="2.1.0" />
-    <PackageVersion Include="Enterprise.BuildingBlocks.API" Version="2.1.0" />
+    <PackageVersion Include="Enterprise.BuildingBlocks.Domain" Version="2.1.1" />
+    <PackageVersion Include="Enterprise.BuildingBlocks.Application" Version="2.1.1" />
+    <PackageVersion Include="Enterprise.BuildingBlocks.Infrastructure" Version="2.1.1" />
+    <PackageVersion Include="Enterprise.BuildingBlocks.API" Version="2.1.1" />
 
     <!-- Entity Framework Core -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
