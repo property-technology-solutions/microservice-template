@@ -1,333 +1,342 @@
 # 🏢 Enterprise Deployment Guide
 
-Bu doküman, template'in enterprise ortamda nasıl dağıtılacağını ve kullanılacağını açıklar.
+This guide explains how to deploy and use the microservice template in an enterprise environment.
 
 ---
 
-## 📍 Nereye Koymalı?
-
-### Seçenek 1: Internal Git Repository (Önerilen)
+## 📍 Repository Structure
 
 ```
-Azure DevOps / GitHub Enterprise / GitLab
-└── microservice-template/
-    ├── BuildingBlocks/          ← Shared libraries
-    ├── Services/
-    │   └── HakuService/         ← Template source
-    ├── docker-compose.yml
-    └── README.md
+GitHub Organization: property-technology-solutions
+├── microservice-template/          ← This repo (template + BuildingBlocks)
+├── order-service/                  ← Independent service repo
+├── payment-service/                ← Independent service repo
+└── inventory-service/              ← Independent service repo
 ```
 
-**Avantajlar:**
-- Versiyon kontrolü
-- PR/Code review
-- CI/CD entegrasyonu
-- Access control
+**Key Point:** Each microservice lives in its own repository and only depends on BuildingBlocks via NuGet packages.
 
 ---
 
-### Seçenek 2: Internal NuGet Feed + Template Package
+## 🚀 Developer Onboarding
 
-```
-Azure Artifacts / GitHub Packages / Nexus
-├── PropertyTech.BuildingBlocks.Domain
-├── PropertyTech.BuildingBlocks.Application
-├── PropertyTech.BuildingBlocks.Infrastructure
-├── PropertyTech.BuildingBlocks.API
-└── PropertyTech.Microservice.Template
-```
+### Prerequisites
 
-**Avantajlar:**
-- Bağımsız servis geliştirme
-- Versiyon yönetimi
-- Paket güncelleme kontrolü
-
----
-
-## 🚀 Kurulum Senaryoları
-
-### Senaryo A: Yeni Geliştirici Başlangıcı
-
-```bash
-# 1. Template repository'yi klonla
-git clone https://git.company.com/platform/microservice-template.git
-cd microservice-template
-
-# 2. Template'i yükle
-dotnet new install ./Services/HakuService
-
-# 3. Kendi servisini oluştur
-cd ../my-services
-dotnet new microservice \
-  --serviceName OrderService \
-  --entityName Order \
-  --port 5001
-
-# 4. BuildingBlocks referanslarını ayarla
-# (Local development için symlink veya copy)
-```
-
----
-
-### Senaryo B: NuGet Paketleri ile (Production)
-
-```bash
-# 1. NuGet source ekle (bir kez)
-dotnet nuget add source "https://pkgs.dev.azure.com/company/_packaging/internal/nuget/v3/index.json" \
-  --name "CompanyFeed" \
-  --username "azure" \
-  --password "YOUR_PAT"
-
-# 2. Template'i NuGet'ten yükle
-dotnet new install PropertyTech.Microservice.Template
-
-# 3. Yeni servis oluştur
-dotnet new microservice \
-  --serviceName OrderService \
-  --entityName Order \
-  --useLocalBuildingBlocks false
-```
-
----
-
-## 📋 Developer Onboarding Checklist
-
-### Ön Koşullar
-- [ ] .NET 9.0 SDK kurulu
-- [ ] Docker Desktop kurulu
-- [ ] Git kurulu
+- [ ] .NET 9.0 SDK installed
+- [ ] Docker Desktop installed
+- [ ] Git installed
 - [ ] IDE (Rider / VS2022 / VS Code)
-- [ ] Internal NuGet feed erişimi (varsa)
+- [ ] GitHub access to `property-technology-solutions` organization
 
-### İlk Kurulum
+### First-Time Setup
+
 ```bash
-# 1. Repository'yi klonla
-git clone https://git.company.com/platform/microservice-template.git
-
-# 2. Dependency'leri restore et
+# 1. Clone template repository
+git clone https://github.com/property-technology-solutions/microservice-template.git
 cd microservice-template
-dotnet restore
 
-# 3. Build et
-dotnet build
-
-# 4. Infrastructure'ı başlat
-docker-compose up -d postgres redis
-
-# 5. Örnek servisi çalıştır
-cd Services/HakuService/src/HakuService.API
-dotnet run
-
-# 6. Test et
-curl http://localhost:5000/health
-```
-
-### Template Kurulumu
-```bash
-# Template'i yükle
+# 2. Install the template
 dotnet new install ./Services/HakuService
 
-# Kurulumu doğrula
+# 3. Verify installation
 dotnet new list | grep microservice
+# Should show: Enterprise Microservice  microservice  [C#]
 ```
+
+### NuGet Authentication (Required for Private Packages)
+
+If packages are private, developers need to authenticate:
+
+```bash
+# Add GitHub Packages source with authentication
+dotnet nuget add source "https://nuget.pkg.github.com/property-technology-solutions/index.json" \
+  --name "github-pts" \
+  --username "YOUR_GITHUB_USERNAME" \
+  --password "YOUR_GITHUB_TOKEN" \
+  --store-password-in-clear-text
+```
+
+**Note:** GitHub token needs `read:packages` scope.
 
 ---
 
-## 🏗️ Yeni Servis Oluşturma
+## 🏗️ Creating a New Microservice
 
-### Adım 1: Servis Oluştur
+### Step 1: Create Service
+
 ```bash
+# Navigate to your projects directory
+cd ~/projects
+
+# Create new service
 dotnet new microservice \
   --serviceName OrderService \
   --entityName Order \
   --entityPlural Orders \
-  --databaseName orderdb \
   --port 5001 \
-  --output ./Services/OrderService
+  --databaseName orders_db
 ```
 
-### Adım 2: Veritabanı Migration
+### Step 2: Initialize Git Repository
+
 ```bash
-cd Services/OrderService/src/OrderService.API
+cd OrderService
+git init
+git add .
+git commit -m "Initial commit from microservice template"
 
-# Migration oluştur
-dotnet ef migrations add InitialCreate \
-  --project ../OrderService.Infrastructure \
-  --startup-project .
+# Create repo on GitHub and push
+git remote add origin https://github.com/property-technology-solutions/order-service.git
+git push -u origin main
+```
 
-# Veritabanını güncelle
+### Step 3: Database Migration
+
+```bash
+cd src/OrderService.API
+
+# Create initial migration
+dotnet ef migrations add InitialCreate --project ../OrderService.Infrastructure
+
+# Apply migration (requires running PostgreSQL)
 dotnet ef database update
 ```
 
-### Adım 3: docker-compose'a Ekle
-```yaml
-# docker-compose.yml'e ekle
-orderservice:
-  build:
-    context: ./Services/OrderService
-    dockerfile: Dockerfile
-  container_name: orderservice-api
-  environment:
-    ASPNETCORE_ENVIRONMENT: Development
-    ConnectionStrings__DefaultConnection: "Host=postgres;Database=orderdb;..."
-    ConnectionStrings__Redis: "redis:6379"
-  ports:
-    - "5001:8080"
-  depends_on:
-    - postgres
-    - redis
+### Step 4: Configure Application
+
+Edit `src/OrderService.API/appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=orders_db;Username=postgres;Password=postgres",
+    "Redis": "localhost:6379"
+  },
+  "UseKeycloak": false,
+  "Keycloak": {
+    "Authority": "https://keycloak.company.com/realms/platform",
+    "ClientId": "order-service"
+  }
+}
 ```
 
-### Adım 4: Çalıştır
-```bash
-# Local
-dotnet run
+### Step 5: Run Service
 
-# Docker
-docker-compose up -d orderservice
+```bash
+# Start infrastructure
+docker-compose up -d postgres redis
+
+# Run service
+dotnet run --project src/OrderService.API
+
+# Access
+# Swagger: http://localhost:5001/swagger
+# Health: http://localhost:5001/health
 ```
 
 ---
 
 ## 🔄 CI/CD Pipeline
 
-### GitHub Actions (Otomatik)
-```
-Push to main → Build → Test → Template Test → Security Scan
-Push tag v* → Build → Test → Pack NuGet → Publish → Create Release
-```
+### GitHub Actions Example
 
-### Azure DevOps Pipeline (Örnek)
+Create `.github/workflows/ci.yml` in your service repo:
+
 ```yaml
-trigger:
-  - main
+name: CI
 
-pool:
-  vmImage: 'ubuntu-latest'
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
-steps:
-  - task: UseDotNet@2
-    inputs:
-      version: '9.0.x'
-  
-  - script: dotnet restore
-  - script: dotnet build --configuration Release
-  - script: dotnet test --configuration Release
-  
-  - task: NuGetCommand@2
-    inputs:
-      command: 'pack'
-      packagesToPack: '**/BuildingBlocks.*/*.csproj'
-      versioningScheme: 'byBuildNumber'
-  
-  - task: NuGetCommand@2
-    inputs:
-      command: 'push'
-      publishVstsFeed: 'internal-feed'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      
+      - name: Configure NuGet
+        run: |
+          dotnet nuget add source "https://nuget.pkg.github.com/property-technology-solutions/index.json" \
+            --name "github-pts" \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.GITHUB_TOKEN }} \
+            --store-password-in-clear-text
+      
+      - name: Restore
+        run: dotnet restore
+      
+      - name: Build
+        run: dotnet build --no-restore -c Release
+      
+      - name: Test
+        run: dotnet test --no-build -c Release
 ```
 
 ---
 
-## 📦 BuildingBlocks Güncelleme
+## 🐳 Docker Deployment
 
-### Versiyon Yükseltme
-```bash
-# 1. Version güncelle (tüm csproj'larda)
-# Directory.Build.props veya her csproj'da <Version>2.2.0</Version>
+### Dockerfile (Already Included)
 
-# 2. CHANGELOG güncelle
-# CHANGELOG.md'ye yeni version ekle
+```dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+WORKDIR /app
+EXPOSE 8080
 
-# 3. Tag oluştur ve push et
-git tag v2.2.0
-git push origin v2.2.0
-
-# 4. CI/CD otomatik olarak:
-#    - Build & test
-#    - NuGet paketleri oluştur
-#    - Internal feed'e publish et
-#    - GitHub Release oluştur
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+# ... (see generated Dockerfile)
 ```
 
-### Servislerde Güncelleme
-```bash
-# NuGet kullanıyorsa
-dotnet add package PropertyTech.BuildingBlocks.Domain --version 2.2.0
+### Docker Compose (Production)
 
-# Local reference kullanıyorsa
-git pull  # Template repo'dan
-```
-
----
-
-## 🔐 Güvenlik
-
-### Secrets Yönetimi
-```bash
-# Development
-# appsettings.Development.json (git ignore)
-
-# Production
-# Azure Key Vault / AWS Secrets Manager / HashiCorp Vault
-```
-
-### Keycloak Entegrasyonu
-```json
-{
-  "UseKeycloak": true,
-  "Keycloak": {
-    "Authority": "https://keycloak.company.com/realms/platform",
-    "ClientId": "order-service",
-    "ClientSecret": "${KEYCLOAK_SECRET}"  // Environment variable
-  }
-}
+```yaml
+version: '3.8'
+services:
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=orders_db;...
+      - ConnectionStrings__Redis=redis:6379
+    ports:
+      - "5001:8080"
+    depends_on:
+      - postgres
+      - redis
 ```
 
 ---
 
 ## 📊 Monitoring
 
-### Endpoints
-| Endpoint | Açıklama |
-|----------|----------|
-| `/health` | Genel sağlık durumu |
+### Health Checks
+
+Each service exposes:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/health` | Overall health status |
 | `/health/live` | Kubernetes liveness probe |
 | `/health/ready` | Kubernetes readiness probe |
-| `/metrics` | Prometheus metrics |
-| `/swagger` | API documentation |
 
-### Prometheus Config
+### Prometheus Metrics
+
+Metrics available at `/metrics`:
+
 ```yaml
+# prometheus.yml
 scrape_configs:
   - job_name: 'order-service'
     static_configs:
-      - targets: ['orderservice:8080']
+      - targets: ['order-service:8080']
     metrics_path: '/metrics'
+```
+
+### OpenTelemetry Tracing
+
+Configure in `appsettings.json`:
+
+```json
+{
+  "OpenTelemetry": {
+    "Endpoint": "http://otel-collector:4317"
+  }
+}
 ```
 
 ---
 
-## ❓ SSS
+## 🔐 Security
 
-### Template güncellendikten sonra mevcut servisler nasıl güncellenir?
-> Manual migration gerekir. CHANGELOG.md'deki breaking changes'i kontrol edin.
+### Keycloak Integration
 
-### BuildingBlocks'ta bug fix yaptım, servislere nasıl yansır?
-> NuGet kullanıyorsanız: version bump + package update
-> Local reference kullanıyorsanız: git pull
+1. Set `UseKeycloak: true` in appsettings
+2. Configure Keycloak settings:
 
-### Yeni bir BuildingBlocks özelliği nasıl eklenir?
-> 1. Feature branch oluştur
-> 2. Implement et
-> 3. PR aç
-> 4. Review sonrası merge
-> 5. Tag ve release
+```json
+{
+  "UseKeycloak": true,
+  "Keycloak": {
+    "Authority": "https://keycloak.company.com/realms/platform",
+    "ClientId": "order-service",
+    "ClientSecret": "${KEYCLOAK_SECRET}",
+    "RequireHttpsMetadata": true
+  }
+}
+```
+
+3. Use `[Authorize]` attribute on controllers
+
+### Secrets Management
+
+**Development:**
+- Use `appsettings.Development.json` (gitignored)
+- Use user secrets: `dotnet user-secrets set "Key" "Value"`
+
+**Production:**
+- Azure Key Vault
+- AWS Secrets Manager
+- HashiCorp Vault
+- Kubernetes Secrets
 
 ---
 
-## 📞 Destek
+## 📦 Updating BuildingBlocks
 
-- **Slack:** #platform-team
-- **Wiki:** https://wiki.company.com/microservice-template
-- **Issues:** https://git.company.com/platform/microservice-template/issues
+When a new BuildingBlocks version is released:
 
+```bash
+cd your-service
+
+# Update packages to new version
+dotnet add package Enterprise.BuildingBlocks.Domain --version 2.2.0
+dotnet add package Enterprise.BuildingBlocks.Application --version 2.2.0
+dotnet add package Enterprise.BuildingBlocks.Infrastructure --version 2.2.0
+dotnet add package Enterprise.BuildingBlocks.API --version 2.2.0
+
+# Or edit Directory.Packages.props and run:
+dotnet restore
+```
+
+---
+
+## ❓ FAQ
+
+### Q: Do I need to clone microservice-template for every new service?
+
+**A:** No! You only need to:
+1. Clone once to install the template
+2. After that, run `dotnet new microservice` anywhere
+
+### Q: How do services get BuildingBlocks updates?
+
+**A:** Via NuGet package updates. Services are independent and only reference BuildingBlocks packages.
+
+### Q: Can I modify BuildingBlocks for my service?
+
+**A:** No. BuildingBlocks changes should be made in the template repo and released as new versions. This ensures consistency across all services.
+
+### Q: What if I need a feature not in BuildingBlocks?
+
+**A:** 
+1. For service-specific features: Add to your service's codebase
+2. For reusable features: Submit PR to microservice-template repo
+
+---
+
+## 🆘 Support
+
+- **Repository Issues:** https://github.com/property-technology-solutions/microservice-template/issues
+- **Slack Channel:** #platform-team
+- **Wiki:** https://wiki.company.com/microservices
