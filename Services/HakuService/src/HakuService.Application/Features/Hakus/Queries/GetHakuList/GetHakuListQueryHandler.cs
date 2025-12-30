@@ -69,7 +69,7 @@ public class GetHakuListQueryHandler : IRequestHandler<GetHakuListQuery, Result<
         var hakus = orderedList.Select(h => new HakuResponse(
             h.Id,
             h.Name,
-            h.SSId!.Value,
+            h.SSId,
             h.IsFeatured,
             h.Created
         )).ToList();

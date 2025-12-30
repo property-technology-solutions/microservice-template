@@ -46,7 +46,7 @@ public class CreateHakuCommandHandler : IRequestHandler<CreateHakuCommand, Resul
         var response = new HakuResponse(
             haku.Id,
             haku.Name,
-            haku.SSId!.Value,
+            haku.SSId,
             haku.IsFeatured,
             haku.Created
         );

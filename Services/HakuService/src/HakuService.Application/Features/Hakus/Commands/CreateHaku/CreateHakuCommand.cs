@@ -15,11 +15,11 @@ public record CreateHakuCommand(
 /// Response DTO for Haku
 /// </summary>
 public record HakuResponse(
-    int Id,
+    Guid Id,
     string Name,
-    int SSId,
+    int? SSId,
     bool IsFeatured,
-    DateTime Created,
+    DateTime? Created,
     string Language = "tr",
     bool IsTranslated = false
 );

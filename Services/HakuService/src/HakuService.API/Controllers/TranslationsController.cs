@@ -10,7 +10,7 @@ namespace HakuService.API.Controllers;
 /// Admin controller for managing Haku translations.
 /// Provides multi-language content management.
 /// </summary>
-[Route("api/admin/hakus/{hakuId:int}/translations")]
+[Route("api/admin/hakus/{hakuId:guid}/translations")]
 [Authorize(Roles = "Admin")]
 public class TranslationsController : BaseApiController
 {
@@ -31,7 +31,7 @@ public class TranslationsController : BaseApiController
     [HttpGet]
     [ProducesResponseType(typeof(List<TranslationResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetTranslations(int hakuId)
+    public async Task<IActionResult> GetTranslations(Guid hakuId)
     {
         var hakuExists = await _context.Hakus.AnyAsync(h => h.Id == hakuId);
         if (!hakuExists)
@@ -61,7 +61,7 @@ public class TranslationsController : BaseApiController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SetTranslation(
-        int hakuId, 
+        Guid hakuId, 
         string languageCode, 
         [FromBody] SetTranslationRequest request)
     {
@@ -95,7 +95,7 @@ public class TranslationsController : BaseApiController
     [HttpDelete("{languageCode}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteTranslation(int hakuId, string languageCode)
+    public async Task<IActionResult> DeleteTranslation(Guid hakuId, string languageCode)
     {
         var haku = await _context.Hakus
             .Include(h => h.Translations)
@@ -128,4 +128,4 @@ public record SetTranslationRequest(string Name);
 /// <param name="Id">Translation ID</param>
 /// <param name="LanguageCode">Language code</param>
 /// <param name="Name">Translated name</param>
-public record TranslationResponse(int Id, string LanguageCode, string Name);
+public record TranslationResponse(Guid Id, string LanguageCode, string Name);

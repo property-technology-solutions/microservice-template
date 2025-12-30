@@ -53,10 +53,10 @@ public class HakusController : BaseApiController
     /// </summary>
     /// <param name="id">Haku ID</param>
     /// <returns>Haku details</returns>
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(HakuResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _sender.Send(new GetHakuQuery(id));
 

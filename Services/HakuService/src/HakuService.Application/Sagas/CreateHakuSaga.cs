@@ -16,7 +16,7 @@ public class CreateHakuWithNotificationSaga
     {
         private readonly IApplicationDbContext _context;
         private readonly ILogger<CreateHakuStep> _logger;
-        private int _createdHakuId;
+        private Guid _createdHakuId;
 
         public CreateHakuStep(IApplicationDbContext context, ILogger<CreateHakuStep> logger)
         {
@@ -28,7 +28,7 @@ public class CreateHakuWithNotificationSaga
         {
             _logger.LogInformation("Creating Haku in database");
             // Create logic here
-            _createdHakuId = 123; // Simulated
+            _createdHakuId = Guid.NewGuid(); // Simulated
             await Task.CompletedTask;
         }
 

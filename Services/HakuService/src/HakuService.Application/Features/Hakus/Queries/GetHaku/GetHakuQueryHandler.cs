@@ -65,7 +65,7 @@ public class GetHakuQueryHandler : IRequestHandler<GetHakuQuery, Result<HakuResp
         var response = new HakuResponse(
             haku.Id,
             translation?.Name ?? haku.Name,
-            haku.SSId!.Value,
+            haku.SSId,
             haku.IsFeatured,
             haku.Created,
             language,

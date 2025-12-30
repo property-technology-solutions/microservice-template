@@ -10,7 +10,7 @@ public class HakuTranslation : BaseTranslation
     /// <summary>
     /// Foreign key to Haku
     /// </summary>
-    public int HakuId { get; set; }
+    public Guid HakuId { get; set; }
 
     /// <summary>
     /// Translated name

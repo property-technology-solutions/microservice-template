@@ -13,9 +13,10 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
     </ItemGroup>
 
+    <!-- Use ProjectReference for local development -->
     <ItemGroup>
-        <PackageReference Include="Enterprise.BuildingBlocks.Application" />
-        <PackageReference Include="Enterprise.BuildingBlocks.Infrastructure" />
+        <ProjectReference Include="../../../../BuildingBlocks/BuildingBlocks.Application/BuildingBlocks.Application.csproj" />
+        <ProjectReference Include="../../../../BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>

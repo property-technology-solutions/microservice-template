@@ -7,5 +7,5 @@ namespace HakuService.Application.Features.Hakus.Queries.GetHaku;
 /// <summary>
 /// Query to get a single Haku by ID
 /// </summary>
-public record GetHakuQuery(int Id) : IRequest<Result<HakuResponse>>;
+public record GetHakuQuery(Guid Id) : IRequest<Result<HakuResponse>>;
 

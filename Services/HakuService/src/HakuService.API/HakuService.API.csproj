@@ -35,8 +35,9 @@
         <PackageReference Include="Swashbuckle.AspNetCore" />
     </ItemGroup>
 
+    <!-- Use ProjectReference for local development -->
     <ItemGroup>
-        <PackageReference Include="Enterprise.BuildingBlocks.API" />
+        <ProjectReference Include="../../../../BuildingBlocks/BuildingBlocks.API/BuildingBlocks.API.csproj" />
     </ItemGroup>
 
     <ItemGroup>

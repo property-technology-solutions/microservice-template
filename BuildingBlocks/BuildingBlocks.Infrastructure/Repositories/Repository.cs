@@ -22,7 +22,7 @@ public class Repository<T> : IRepository<T>, IReadRepository<T> where T : BaseEn
     }
 
     /// <inheritdoc/>
-    public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
     }
@@ -72,6 +72,10 @@ public class Repository<T> : IRepository<T>, IReadRepository<T> where T : BaseEn
     /// <inheritdoc/>
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
+        if (entity.Id == Guid.Empty)
+        {
+            entity.Id = Guid.NewGuid();
+        }
         await _dbSet.AddAsync(entity, cancellationToken);
         return entity;
     }
@@ -80,6 +84,10 @@ public class Repository<T> : IRepository<T>, IReadRepository<T> where T : BaseEn
     public virtual async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
     {
         var entityList = entities.ToList();
+        foreach (var entity in entityList.Where(e => e.Id == Guid.Empty))
+        {
+            entity.Id = Guid.NewGuid();
+        }
         await _dbSet.AddRangeAsync(entityList, cancellationToken);
         return entityList;
     }
@@ -94,10 +102,16 @@ public class Repository<T> : IRepository<T>, IReadRepository<T> where T : BaseEn
     /// <inheritdoc/>
     public virtual Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
     {
-        // Soft delete: set Status = 0
-        entity.Status = 0;
-        entity.Updated = DateTime.UtcNow;
-        return UpdateAsync(entity, cancellationToken);
+        // Soft delete: set Status = 0 (if Status is being used)
+        if (entity.Status.HasValue)
+        {
+            entity.Status = 0;
+            entity.Updated = DateTime.UtcNow;
+            return UpdateAsync(entity, cancellationToken);
+        }
+        
+        // If Status is not used, perform hard delete
+        return HardDeleteAsync(entity, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -110,9 +124,6 @@ public class Repository<T> : IRepository<T>, IReadRepository<T> where T : BaseEn
     /// <summary>
     /// Applies specification to the query.
     /// </summary>
-    /// <param name="specification">Specification to apply</param>
-    /// <param name="evaluateCriteriaOnly">If true, only applies criteria (for Count/Any operations)</param>
-    /// <returns>IQueryable with specification applied</returns>
     protected IQueryable<T> ApplySpecification(ISpecification<T> specification, bool evaluateCriteriaOnly = false)
     {
         return SpecificationEvaluator<T>.GetQuery(_dbSet.AsQueryable(), specification, evaluateCriteriaOnly);
@@ -122,35 +133,25 @@ public class Repository<T> : IRepository<T>, IReadRepository<T> where T : BaseEn
 /// <summary>
 /// Evaluates specifications and builds EF Core queries.
 /// </summary>
-/// <typeparam name="T">Entity type</typeparam>
 internal static class SpecificationEvaluator<T> where T : BaseEntity
 {
-    /// <summary>
-    /// Builds a query from the specification.
-    /// </summary>
     public static IQueryable<T> GetQuery(IQueryable<T> inputQuery, ISpecification<T> specification, bool evaluateCriteriaOnly = false)
     {
         var query = inputQuery;
 
-        // Apply criteria (WHERE clause)
         if (specification.Criteria is not null)
         {
             query = query.Where(specification.Criteria);
         }
 
-        // For count/any operations, we only need the criteria
         if (evaluateCriteriaOnly)
         {
             return query;
         }
 
-        // Apply includes (eager loading)
         query = specification.Includes.Aggregate(query, (current, include) => current.Include(include));
-
-        // Apply string-based includes (for ThenInclude scenarios)
         query = specification.IncludeStrings.Aggregate(query, (current, include) => current.Include(include));
 
-        // Apply ordering
         if (specification.OrderBy is not null)
         {
             query = query.OrderBy(specification.OrderBy);
@@ -160,7 +161,6 @@ internal static class SpecificationEvaluator<T> where T : BaseEntity
             query = query.OrderByDescending(specification.OrderByDescending);
         }
 
-        // Apply paging
         if (specification.IsPagingEnabled)
         {
             query = query.Skip(specification.Skip).Take(specification.Take);
@@ -169,4 +169,3 @@ internal static class SpecificationEvaluator<T> where T : BaseEntity
         return query;
     }
 }
-
