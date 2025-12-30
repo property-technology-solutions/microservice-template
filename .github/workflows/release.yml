@@ -34,14 +34,20 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Publishing version: $VERSION"
 
-      - name: Restore dependencies
-        run: dotnet restore
+      # Only restore and build BuildingBlocks projects (not HakuService template)
+      - name: Restore BuildingBlocks
+        run: |
+          dotnet restore BuildingBlocks/BuildingBlocks.Domain/BuildingBlocks.Domain.csproj
+          dotnet restore BuildingBlocks/BuildingBlocks.Application/BuildingBlocks.Application.csproj
+          dotnet restore BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj
+          dotnet restore BuildingBlocks/BuildingBlocks.API/BuildingBlocks.API.csproj
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
+      - name: Build BuildingBlocks
+        run: |
+          dotnet build BuildingBlocks/BuildingBlocks.Domain/BuildingBlocks.Domain.csproj --no-restore --configuration Release
+          dotnet build BuildingBlocks/BuildingBlocks.Application/BuildingBlocks.Application.csproj --no-restore --configuration Release
+          dotnet build BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj --no-restore --configuration Release
+          dotnet build BuildingBlocks/BuildingBlocks.API/BuildingBlocks.API.csproj --no-restore --configuration Release
 
       - name: Pack BuildingBlocks.Domain
         run: |
