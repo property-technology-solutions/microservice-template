@@ -1,9 +1,9 @@
-name: Release
+name: Release BuildingBlocks
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -12,7 +12,7 @@ env:
 
 jobs:
   release:
-    name: Build & Publish
+    name: Build & Publish NuGet Packages
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -27,9 +27,12 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Get Version from Tag
+      - name: Extract Version from Tag
         id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Publishing version: $VERSION"
 
       - name: Restore dependencies
         run: dotnet restore
@@ -38,76 +41,75 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test --no-build --configuration Release
+        run: dotnet test --no-build --configuration Release --verbosity normal
 
-      # Pack BuildingBlocks
       - name: Pack BuildingBlocks.Domain
         run: |
           dotnet pack BuildingBlocks/BuildingBlocks.Domain/BuildingBlocks.Domain.csproj \
             --configuration Release \
-            --output ./nupkgs \
-            /p:Version=${{ steps.version.outputs.VERSION }}
+            --no-build \
+            -p:PackageVersion=${{ steps.version.outputs.VERSION }} \
+            --output ./nupkgs
 
       - name: Pack BuildingBlocks.Application
         run: |
           dotnet pack BuildingBlocks/BuildingBlocks.Application/BuildingBlocks.Application.csproj \
             --configuration Release \
-            --output ./nupkgs \
-            /p:Version=${{ steps.version.outputs.VERSION }}
+            --no-build \
+            -p:PackageVersion=${{ steps.version.outputs.VERSION }} \
+            --output ./nupkgs
 
       - name: Pack BuildingBlocks.Infrastructure
         run: |
           dotnet pack BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj \
             --configuration Release \
-            --output ./nupkgs \
-            /p:Version=${{ steps.version.outputs.VERSION }}
+            --no-build \
+            -p:PackageVersion=${{ steps.version.outputs.VERSION }} \
+            --output ./nupkgs
 
       - name: Pack BuildingBlocks.API
         run: |
           dotnet pack BuildingBlocks/BuildingBlocks.API/BuildingBlocks.API.csproj \
             --configuration Release \
-            --output ./nupkgs \
-            /p:Version=${{ steps.version.outputs.VERSION }}
+            --no-build \
+            -p:PackageVersion=${{ steps.version.outputs.VERSION }} \
+            --output ./nupkgs
 
-      # Publish to GitHub Packages
-      - name: Publish to GitHub Packages
+      - name: List Packages
+        run: ls -la ./nupkgs
+
+      - name: Push to GitHub Packages
         run: |
-          dotnet nuget push ./nupkgs/*.nupkg \
+          dotnet nuget push "./nupkgs/*.nupkg" \
             --source "https://nuget.pkg.github.com/property-technology-solutions/index.json" \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --skip-duplicate
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Create GitHub Release
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ steps.version.outputs.VERSION }}
+          name: BuildingBlocks v${{ steps.version.outputs.VERSION }}
           body: |
-            ## 🚀 Release ${{ steps.version.outputs.VERSION }}
+            ## 📦 BuildingBlocks v${{ steps.version.outputs.VERSION }}
+            
+            ### NuGet Packages
+            - `Enterprise.BuildingBlocks.Domain` v${{ steps.version.outputs.VERSION }}
+            - `Enterprise.BuildingBlocks.Application` v${{ steps.version.outputs.VERSION }}
+            - `Enterprise.BuildingBlocks.Infrastructure` v${{ steps.version.outputs.VERSION }}
+            - `Enterprise.BuildingBlocks.API` v${{ steps.version.outputs.VERSION }}
             
             ### Installation
             ```bash
-            # Install template
-            dotnet new install PropertyTech.Microservice.Template::${{ steps.version.outputs.VERSION }}
-            
-            # Or from source
-            git clone https://github.com/property-technology-solutions/microservice-template.git
-            cd microservice-template
-            dotnet new install .
+            dotnet add package Enterprise.BuildingBlocks.Domain --version ${{ steps.version.outputs.VERSION }}
+            dotnet add package Enterprise.BuildingBlocks.Application --version ${{ steps.version.outputs.VERSION }}
+            dotnet add package Enterprise.BuildingBlocks.Infrastructure --version ${{ steps.version.outputs.VERSION }}
+            dotnet add package Enterprise.BuildingBlocks.API --version ${{ steps.version.outputs.VERSION }}
             ```
             
-            ### Usage
-            ```bash
-            dotnet new microservice --service-name OrderService --entity-name Order
-            ```
-            
-            ### NuGet Packages
-            - PropertyTech.BuildingBlocks.Domain
-            - PropertyTech.BuildingBlocks.Application
-            - PropertyTech.BuildingBlocks.Infrastructure
-            - PropertyTech.BuildingBlocks.API
+            ### What's Changed
+            See [CHANGELOG.md](CHANGELOG.md) for details.
           files: |
             ./nupkgs/*.nupkg
           draft: false
@@ -115,3 +117,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Summary
+        run: |
+          echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Published Packages" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Enterprise.BuildingBlocks.Domain | ${{ steps.version.outputs.VERSION }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Enterprise.BuildingBlocks.Application | ${{ steps.version.outputs.VERSION }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Enterprise.BuildingBlocks.Infrastructure | ${{ steps.version.outputs.VERSION }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Enterprise.BuildingBlocks.API | ${{ steps.version.outputs.VERSION }} |" >> $GITHUB_STEP_SUMMARY
