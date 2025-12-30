@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: hakuservice-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hakudb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - haku-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: hakuservice-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - haku-network
+
+  # HakuService API
+  hakuservice:
+    build:
+      context: ./Services/HakuService
+      dockerfile: Dockerfile
+    container_name: hakuservice-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=hakudb;Username=postgres;Password=postgres"
+      ConnectionStrings__Redis: "redis:6379"
+      OpenTelemetry__Endpoint: "http://otel-collector:4317"
+      Localization__DefaultLanguage: "tr"
+      Localization__SupportedLanguages: "tr,en,ar,de,fr"
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - haku-network
+    restart: unless-stopped
+
+  # Nginx API Gateway
+  nginx:
+    image: nginx:alpine
+    container_name: hakuservice-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - hakuservice
+    networks:
+      - haku-network
+    restart: unless-stopped
+
+  # OpenTelemetry Collector (Optional - for observability)
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: hakuservice-otel
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./docker/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Prometheus metrics
+    networks:
+      - haku-network
+
+networks:
+  haku-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+

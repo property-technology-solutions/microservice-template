@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+        <PackageReference Include="MediatR" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Enterprise.BuildingBlocks.Application" />
+        <PackageReference Include="Enterprise.BuildingBlocks.Infrastructure" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\HakuService.Domain\HakuService.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

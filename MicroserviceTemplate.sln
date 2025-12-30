@@ -1,0 +1,84 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildingBlocks", "BuildingBlocks", "{38F1FC1B-0AD9-4422-B81F-25E6C1053A35}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingBlocks.Domain", "BuildingBlocks\BuildingBlocks.Domain\BuildingBlocks.Domain.csproj", "{44033065-9CB2-4369-8C56-0D9547EE7B06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingBlocks.Application", "BuildingBlocks\BuildingBlocks.Application\BuildingBlocks.Application.csproj", "{6F08DCAE-A0BB-4367-9CEC-7E6276663966}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingBlocks.Infrastructure", "BuildingBlocks\BuildingBlocks.Infrastructure\BuildingBlocks.Infrastructure.csproj", "{7624863D-60EA-499B-977C-A39EE0B0F017}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingBlocks.API", "BuildingBlocks\BuildingBlocks.API\BuildingBlocks.API.csproj", "{D5DF0F93-545E-45E8-9ABE-71CB304235B1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{682B3558-6547-4DA8-A994-8C0CB4E6553F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HakuService", "HakuService", "{BB801D74-B2C8-464E-9BA6-DC7A8365B1C0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{06673B2A-7434-4E8B-B29A-16D5B5D802D6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HakuService.Domain", "Services\HakuService\src\HakuService.Domain\HakuService.Domain.csproj", "{303A58E2-C7B1-4D85-99CA-963B92A63773}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HakuService.Application", "Services\HakuService\src\HakuService.Application\HakuService.Application.csproj", "{DA310F54-B639-4184-A6C9-EC28ED72DB7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HakuService.Infrastructure", "Services\HakuService\src\HakuService.Infrastructure\HakuService.Infrastructure.csproj", "{2D9C1455-D503-4C58-9573-250863B96B1A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HakuService.API", "Services\HakuService\src\HakuService.API\HakuService.API.csproj", "{E7C81C05-0728-4AEB-B9FA-0396B0BEB71E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{44033065-9CB2-4369-8C56-0D9547EE7B06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44033065-9CB2-4369-8C56-0D9547EE7B06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44033065-9CB2-4369-8C56-0D9547EE7B06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44033065-9CB2-4369-8C56-0D9547EE7B06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F08DCAE-A0BB-4367-9CEC-7E6276663966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F08DCAE-A0BB-4367-9CEC-7E6276663966}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F08DCAE-A0BB-4367-9CEC-7E6276663966}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F08DCAE-A0BB-4367-9CEC-7E6276663966}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7624863D-60EA-499B-977C-A39EE0B0F017}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7624863D-60EA-499B-977C-A39EE0B0F017}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7624863D-60EA-499B-977C-A39EE0B0F017}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7624863D-60EA-499B-977C-A39EE0B0F017}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5DF0F93-545E-45E8-9ABE-71CB304235B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5DF0F93-545E-45E8-9ABE-71CB304235B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5DF0F93-545E-45E8-9ABE-71CB304235B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5DF0F93-545E-45E8-9ABE-71CB304235B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{303A58E2-C7B1-4D85-99CA-963B92A63773}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{303A58E2-C7B1-4D85-99CA-963B92A63773}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{303A58E2-C7B1-4D85-99CA-963B92A63773}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{303A58E2-C7B1-4D85-99CA-963B92A63773}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA310F54-B639-4184-A6C9-EC28ED72DB7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA310F54-B639-4184-A6C9-EC28ED72DB7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA310F54-B639-4184-A6C9-EC28ED72DB7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA310F54-B639-4184-A6C9-EC28ED72DB7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D9C1455-D503-4C58-9573-250863B96B1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D9C1455-D503-4C58-9573-250863B96B1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D9C1455-D503-4C58-9573-250863B96B1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D9C1455-D503-4C58-9573-250863B96B1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7C81C05-0728-4AEB-B9FA-0396B0BEB71E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7C81C05-0728-4AEB-B9FA-0396B0BEB71E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7C81C05-0728-4AEB-B9FA-0396B0BEB71E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7C81C05-0728-4AEB-B9FA-0396B0BEB71E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{44033065-9CB2-4369-8C56-0D9547EE7B06} = {38F1FC1B-0AD9-4422-B81F-25E6C1053A35}
+		{6F08DCAE-A0BB-4367-9CEC-7E6276663966} = {38F1FC1B-0AD9-4422-B81F-25E6C1053A35}
+		{7624863D-60EA-499B-977C-A39EE0B0F017} = {38F1FC1B-0AD9-4422-B81F-25E6C1053A35}
+		{D5DF0F93-545E-45E8-9ABE-71CB304235B1} = {38F1FC1B-0AD9-4422-B81F-25E6C1053A35}
+		{BB801D74-B2C8-464E-9BA6-DC7A8365B1C0} = {682B3558-6547-4DA8-A994-8C0CB4E6553F}
+		{06673B2A-7434-4E8B-B29A-16D5B5D802D6} = {BB801D74-B2C8-464E-9BA6-DC7A8365B1C0}
+		{303A58E2-C7B1-4D85-99CA-963B92A63773} = {06673B2A-7434-4E8B-B29A-16D5B5D802D6}
+		{DA310F54-B639-4184-A6C9-EC28ED72DB7E} = {06673B2A-7434-4E8B-B29A-16D5B5D802D6}
+		{2D9C1455-D503-4C58-9573-250863B96B1A} = {06673B2A-7434-4E8B-B29A-16D5B5D802D6}
+		{E7C81C05-0728-4AEB-B9FA-0396B0BEB71E} = {06673B2A-7434-4E8B-B29A-16D5B5D802D6}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json.schemastore.org/ide.host",
+  "icon": "icon.png",
+  "symbolInfo": [
+    {
+      "id": "ServiceName",
+      "name": {
+        "text": "Service Name"
+      },
+      "isVisible": "true"
+    },
+    {
+      "id": "EntityName",
+      "name": {
+        "text": "Entity Name"
+      },
+      "isVisible": "true"
+    },
+    {
+      "id": "EntityPlural",
+      "name": {
+        "text": "Entity Plural"
+      },
+      "isVisible": "true"
+    },
+    {
+      "id": "DatabaseName",
+      "name": {
+        "text": "Database Name"
+      },
+      "isVisible": "true"
+    },
+    {
+      "id": "Port",
+      "name": {
+        "text": "HTTP Port"
+      },
+      "isVisible": "true"
+    },
+    {
+      "id": "UseLocalBuildingBlocks",
+      "name": {
+        "text": "Use Local BuildingBlocks (recommended for development)"
+      },
+      "isVisible": "true"
+    }
+  ]
+}

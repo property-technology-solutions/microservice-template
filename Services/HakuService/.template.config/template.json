@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Enterprise Team",
+  "classifications": ["Web", "API", "Microservice", "Clean Architecture"],
+  "identity": "Enterprise.Microservice.Template",
+  "name": "Enterprise Microservice",
+  "shortName": "microservice",
+  "description": "Enterprise-grade .NET 9.0 microservice template with Clean Architecture, CQRS, DDD, and enterprise patterns.",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "HakuService",
+  "preferNameDirectory": true,
+  "symbols": {
+    "serviceName": {
+      "type": "parameter",
+      "datatype": "text",
+      "description": "Name of the microservice (e.g., OrderService)",
+      "isRequired": true,
+      "replaces": "HakuService",
+      "fileRename": "HakuService"
+    },
+    "entityName": {
+      "type": "parameter",
+      "datatype": "text",
+      "description": "Name of the main entity (e.g., Order)",
+      "isRequired": true,
+      "replaces": "Haku",
+      "fileRename": "Haku"
+    },
+    "entityPlural": {
+      "type": "parameter",
+      "datatype": "text",
+      "description": "Plural form of the entity (e.g., Orders)",
+      "defaultValue": "",
+      "replaces": "Hakus"
+    },
+    "entityPluralGenerated": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "entityPlural",
+        "fallbackVariableName": "entityNamePlural"
+      },
+      "replaces": "Hakus"
+    },
+    "entityNamePlural": {
+      "type": "generated",
+      "generator": "join",
+      "parameters": {
+        "symbols": [
+          { "type": "ref", "value": "entityName" },
+          { "type": "const", "value": "s" }
+        ]
+      }
+    },
+    "entityLower": {
+      "type": "derived",
+      "valueSource": "entityName",
+      "valueTransform": "lowerCase",
+      "replaces": "haku"
+    },
+    "databaseName": {
+      "type": "parameter",
+      "datatype": "text",
+      "description": "PostgreSQL database name",
+      "defaultValue": "",
+      "replaces": "hakudb"
+    },
+    "databaseNameGenerated": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "databaseName",
+        "fallbackVariableName": "entityLowerDb"
+      },
+      "replaces": "hakudb"
+    },
+    "entityLowerDb": {
+      "type": "generated",
+      "generator": "join",
+      "parameters": {
+        "symbols": [
+          { "type": "ref", "value": "entityLower" },
+          { "type": "const", "value": "db" }
+        ]
+      }
+    },
+    "port": {
+      "type": "parameter",
+      "datatype": "int",
+      "description": "HTTP port number",
+      "defaultValue": "5000",
+      "replaces": "5000"
+    },
+    "buildingBlocksVersion": {
+      "type": "parameter",
+      "datatype": "text",
+      "description": "Version of Enterprise.BuildingBlocks packages",
+      "defaultValue": "2.1.0",
+      "replaces": "2.1.0"
+    },
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "description": "Skip automatic restore after creation",
+      "defaultValue": "false"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "**/.vs/**",
+            "**/logs/**",
+            "*.user"
+          ]
+        }
+      ]
+    }
+  ],
+  "primaryOutputs": [
+    {
+      "path": "src/HakuService.API/HakuService.API.csproj"
+    }
+  ],
+  "postActions": [
+    {
+      "condition": "(!skipRestore)",
+      "description": "Restore NuGet packages",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ]
+}

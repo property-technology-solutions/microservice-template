@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    
+    <!-- NuGet Package Metadata -->
+    <PackageId>Enterprise.BuildingBlocks.Domain</PackageId>
+    <Version>2.1.0</Version>
+    <Authors>Enterprise Team</Authors>
+    <Company>Enterprise</Company>
+    <Description>Domain layer building blocks for enterprise microservices - DDD patterns, base entities, value objects, domain events</Description>
+    <PackageTags>ddd;domain;entity;valueobject;domainevent;aggregateroot;microservices;cleanarchitecture</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/property-technology-solutions/microservice-template</RepositoryUrl>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR.Contracts" />
+  </ItemGroup>
+
+</Project>

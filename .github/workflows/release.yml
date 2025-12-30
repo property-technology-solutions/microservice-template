@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  release:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Get Version from Tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release
+
+      # Pack BuildingBlocks
+      - name: Pack BuildingBlocks.Domain
+        run: |
+          dotnet pack BuildingBlocks/BuildingBlocks.Domain/BuildingBlocks.Domain.csproj \
+            --configuration Release \
+            --output ./nupkgs \
+            /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack BuildingBlocks.Application
+        run: |
+          dotnet pack BuildingBlocks/BuildingBlocks.Application/BuildingBlocks.Application.csproj \
+            --configuration Release \
+            --output ./nupkgs \
+            /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack BuildingBlocks.Infrastructure
+        run: |
+          dotnet pack BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj \
+            --configuration Release \
+            --output ./nupkgs \
+            /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack BuildingBlocks.API
+        run: |
+          dotnet pack BuildingBlocks/BuildingBlocks.API/BuildingBlocks.API.csproj \
+            --configuration Release \
+            --output ./nupkgs \
+            /p:Version=${{ steps.version.outputs.VERSION }}
+
+      # Publish to GitHub Packages
+      - name: Publish to GitHub Packages
+        run: |
+          dotnet nuget push ./nupkgs/*.nupkg \
+            --source "https://nuget.pkg.github.com/property-technology-solutions/index.json" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## 🚀 Release ${{ steps.version.outputs.VERSION }}
+            
+            ### Installation
+            ```bash
+            # Install template
+            dotnet new install PropertyTech.Microservice.Template::${{ steps.version.outputs.VERSION }}
+            
+            # Or from source
+            git clone https://github.com/property-technology-solutions/microservice-template.git
+            cd microservice-template
+            dotnet new install .
+            ```
+            
+            ### Usage
+            ```bash
+            dotnet new microservice --service-name OrderService --entity-name Order
+            ```
+            
+            ### NuGet Packages
+            - PropertyTech.BuildingBlocks.Domain
+            - PropertyTech.BuildingBlocks.Application
+            - PropertyTech.BuildingBlocks.Infrastructure
+            - PropertyTech.BuildingBlocks.API
+          files: |
+            ./nupkgs/*.nupkg
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

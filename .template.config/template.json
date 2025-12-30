@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Property Technology Solutions",
+  "classifications": [
+    "Web",
+    "Microservice",
+    "Clean Architecture",
+    "CQRS",
+    "DDD"
+  ],
+  "identity": "PropertyTech.Microservice.Template",
+  "name": "Enterprise Microservice Template",
+  "shortName": "microservice",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "HakuService",
+  "preferNameDirectory": true,
+  "symbols": {
+    "ServiceName": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "HakuService",
+      "fileRename": "HakuService",
+      "description": "The name of the microservice (e.g., OrderService, ProductService)"
+    },
+    "EntityName": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "Haku",
+      "fileRename": "Haku",
+      "description": "The main entity name (e.g., Order, Product)"
+    },
+    "EntityNameLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "EntityName",
+        "toLower": true
+      },
+      "replaces": "haku"
+    },
+    "EntityPlural": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "Hakus",
+      "replaces": "Hakus",
+      "description": "Plural form of entity (e.g., Orders, Products)"
+    },
+    "EntityPluralLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "EntityPlural",
+        "toLower": true
+      },
+      "replaces": "hakus"
+    },
+    "DatabaseName": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "hakudb",
+      "replaces": "hakudb",
+      "description": "PostgreSQL database name"
+    },
+    "Port": {
+      "type": "parameter",
+      "datatype": "integer",
+      "defaultValue": "5000",
+      "replaces": "5000",
+      "description": "HTTP port for the API"
+    },
+    "BuildingBlocksVersion": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "1.0.0",
+      "replaces": "BuildingBlocksVersion",
+      "description": "Version of BuildingBlocks NuGet packages"
+    },
+    "UseLocalBuildingBlocks": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Use local BuildingBlocks project references instead of NuGet packages"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!UseLocalBuildingBlocks)",
+          "exclude": [
+            "../../BuildingBlocks/**"
+          ]
+        },
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "**/.vs/**",
+            "**/.vscode/**",
+            "**/*.user",
+            "**/.template.config/**",
+            "**/docker-compose.yml",
+            "**/create-microservice.sh",
+            "**/*.md",
+            "**/tests/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "postActions": [
+    {
+      "condition": "(UseLocalBuildingBlocks)",
+      "description": "Restore NuGet packages",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    },
+    {
+      "condition": "(!UseLocalBuildingBlocks)",
+      "description": "Install BuildingBlocks NuGet packages",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet add package BuildingBlocks.Domain --version {BuildingBlocksVersion}'"
+        },
+        {
+          "text": "Run 'dotnet add package BuildingBlocks.Application --version {BuildingBlocksVersion}'"
+        },
+        {
+          "text": "Run 'dotnet add package BuildingBlocks.Infrastructure --version {BuildingBlocksVersion}'"
+        },
+        {
+          "text": "Run 'dotnet add package BuildingBlocks.API --version {BuildingBlocksVersion}'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ]
+}
