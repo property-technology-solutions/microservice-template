@@ -115,3 +115,4 @@ docker-compose.override.yml
 *.temp
 *.bak
 *.swp
+quar-api
