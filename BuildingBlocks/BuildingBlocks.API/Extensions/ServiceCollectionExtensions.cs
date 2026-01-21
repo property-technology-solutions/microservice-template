@@ -1,7 +1,11 @@
 using BuildingBlocks.API.Filters;
 using BuildingBlocks.API.Middleware;
+using BuildingBlocks.API.Services;
+using BuildingBlocks.Infrastructure.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BuildingBlocks.API.Extensions;
@@ -36,8 +40,22 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Adds ICurrentUserService for extracting user info from JWT claims.
+    /// Required for AuditableEntityInterceptor.
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <returns>Service collection for chaining</returns>
+    public static IServiceCollection AddCurrentUserService(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        return services;
+    }
+
+    /// <summary>
     /// Adds all BuildingBlocks.API services including:
     /// - API response formatting
+    /// - Current user service (for audit trail)
     /// - Standard configuration
     /// </summary>
     /// <param name="services">Service collection</param>
@@ -45,6 +63,51 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBuildingBlocksApi(this IServiceCollection services)
     {
         services.AddApiResponseFormatting();
+        services.AddCurrentUserService();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds Keycloak authentication, authorization, and standard RBAC policies.
+    /// One-liner setup for Keycloak-protected microservices.
+    /// 
+    /// Required appsettings.json configuration:
+    /// "Keycloak": {
+    ///   "AuthServerUrl": "https://keycloak.example.com",
+    ///   "Realm": "your-realm",
+    ///   "Resource": "your-client-id"
+    /// }
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <param name="configuration">Application configuration</param>
+    /// <param name="configurePolicies">Optional custom authorization policies</param>
+    /// <returns>Service collection for chaining</returns>
+    public static IServiceCollection AddKeycloakSecurityServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<AuthorizationOptions>? configurePolicies = null)
+    {
+        // Add Keycloak authentication (JWT Bearer)
+        services.AddKeycloakAuthentication(configuration);
+
+        // Add Keycloak role authorization (maps realm_access.roles & resource_access.{client}.roles to ClaimTypes.Role)
+        services.AddKeycloakRoleAuthorization(configuration);
+
+        // Add authorization with default policies
+        services.AddAuthorization(options =>
+        {
+            // Standard role-based policies
+            options.AddPolicy("Admin", policy => policy.RequireRole("Admin", "Administrator"));
+            options.AddPolicy("Manager", policy => policy.RequireRole("Admin", "Administrator", "Manager"));
+            options.AddPolicy("User", policy => policy.RequireRole("Admin", "Administrator", "Manager", "User"));
+            
+            // Read-only policy
+            options.AddPolicy("ReadOnly", policy => policy.RequireRole("ReadOnlyUser", "User", "Manager", "Admin", "Administrator"));
+
+            // Apply custom policies if provided
+            configurePolicies?.Invoke(options);
+        });
+
         return services;
     }
 }

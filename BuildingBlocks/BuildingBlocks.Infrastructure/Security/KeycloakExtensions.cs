@@ -1,135 +1,187 @@
+using Keycloak.AuthServices.Authentication;
+using Keycloak.AuthServices.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace BuildingBlocks.Infrastructure.Security;
 
 /// <summary>
-/// Extension methods for Keycloak authentication setup
+/// Extension methods for Keycloak authentication and authorization setup.
+/// Uses official Keycloak.AuthServices NuGet packages for robust OIDC integration.
+/// 
+/// Configuration format (appsettings.json):
+/// "Keycloak": {
+///   "AuthServerUrl": "https://keycloak.example.com",
+///   "Realm": "MyRealm",
+///   "Resource": "my-api-client",
+///   "VerifyTokenAudience": true
+/// }
 /// </summary>
 public static class KeycloakExtensions
 {
     /// <summary>
-    /// Add Keycloak authentication with RBAC support
-    /// Configures JWT Bearer authentication with Keycloak
+    /// Adds Keycloak JWT Bearer authentication.
     /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <param name="configuration">Application configuration</param>
+    /// <returns>Service collection for chaining</returns>
+    /// <exception cref="InvalidOperationException">Thrown when Keycloak configuration section is missing</exception>
     public static IServiceCollection AddKeycloakAuthentication(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var keycloakOptions = configuration.GetSection(KeycloakAuthOptions.SectionName)
-            .Get<KeycloakAuthOptions>() ?? throw new InvalidOperationException("Keycloak configuration not found");
+        ValidateKeycloakConfiguration(configuration);
 
-        // Clear default claim type mappings
-        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+        services.AddKeycloakWebApiAuthentication(
+            configuration,
+            ConfigureJwtBearerOptions);
 
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+        return services;
+    }
+
+    /// <summary>
+    /// Adds Keycloak JWT Bearer authentication with custom JWT Bearer options.
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <param name="configuration">Application configuration</param>
+    /// <param name="configureOptions">Custom JWT Bearer options configuration</param>
+    /// <returns>Service collection for chaining</returns>
+    public static IServiceCollection AddKeycloakAuthentication(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<JwtBearerOptions> configureOptions)
+    {
+        ValidateKeycloakConfiguration(configuration);
+
+        services.AddKeycloakWebApiAuthentication(
+            configuration,
+            options =>
             {
-                // Keycloak issuer URL
-                options.Authority = $"{keycloakOptions.Authority}/realms/{keycloakOptions.Realm}";
-                options.Audience = keycloakOptions.ClientId;
-                options.RequireHttpsMetadata = keycloakOptions.RequireHttpsMetadata;
-
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = keycloakOptions.ValidateAudience,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = $"{keycloakOptions.Authority}/realms/{keycloakOptions.Realm}",
-                    ValidAudience = keycloakOptions.ClientId,
-                    ClockSkew = TimeSpan.FromMinutes(5),
-                    
-                    // Role claim type for Keycloak
-                    RoleClaimType = ClaimTypes.Role
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnTokenValidated = context =>
-                    {
-                        // Extract roles from Keycloak token
-                        var claimsIdentity = context.Principal?.Identity as ClaimsIdentity;
-                        if (claimsIdentity != null)
-                        {
-                            // Keycloak stores roles in "realm_access.roles" or "resource_access.{client}.roles"
-                            var token = context.SecurityToken as JwtSecurityToken;
-                            if (token != null)
-                            {
-                                // Extract realm roles
-                                var realmAccessClaim = token.Claims
-                                    .FirstOrDefault(c => c.Type == "realm_access");
-                                
-                                if (realmAccessClaim != null && !string.IsNullOrEmpty(realmAccessClaim.Value))
-                                {
-                                    var realmAccess = System.Text.Json.JsonSerializer
-                                        .Deserialize<RealmAccess>(realmAccessClaim.Value);
-                                    
-                                    if (realmAccess?.Roles != null)
-                                    {
-                                        foreach (var role in realmAccess.Roles)
-                                        {
-                                            claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
-                                        }
-                                    }
-                                }
-
-                                // Extract client roles
-                                var resourceAccessClaim = token.Claims
-                                    .FirstOrDefault(c => c.Type == "resource_access");
-                                
-                                if (resourceAccessClaim != null && !string.IsNullOrEmpty(resourceAccessClaim.Value))
-                                {
-                                    var resourceAccess = System.Text.Json.JsonSerializer
-                                        .Deserialize<Dictionary<string, ClientAccess>>(resourceAccessClaim.Value);
-                                    
-                                    if (resourceAccess != null && 
-                                        resourceAccess.TryGetValue(keycloakOptions.ClientId, out var clientAccess) &&
-                                        clientAccess.Roles != null)
-                                    {
-                                        foreach (var role in clientAccess.Roles)
-                                        {
-                                            claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        return Task.CompletedTask;
-                    },
-                    OnAuthenticationFailed = context =>
-                    {
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "application/json";
-                        
-                        var result = System.Text.Json.JsonSerializer.Serialize(new
-                        {
-                            error = "Authentication failed",
-                            message = context.Exception.Message
-                        });
-
-                        return context.Response.WriteAsync(result);
-                    }
-                };
+                ConfigureJwtBearerOptions(options);
+                configureOptions(options);
             });
 
         return services;
     }
 
-    private class RealmAccess
+    /// <summary>
+    /// Adds Keycloak authorization with role-based access control.
+    /// Maps realm_access.roles and resource_access.{client}.roles to ClaimTypes.Role.
+    /// Enables [Authorize(Roles = "role-name")] attribute usage.
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <param name="configuration">Application configuration</param>
+    /// <returns>Service collection for chaining</returns>
+    public static IServiceCollection AddKeycloakRoleAuthorization(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        public List<string>? Roles { get; set; }
+        // Keycloak.AuthServices.Authorization maps Keycloak roles to ClaimTypes.Role
+        services.AddKeycloakAuthorization(configuration);
+        return services;
     }
 
-    private class ClientAccess
+    /// <summary>
+    /// Adds both Keycloak authentication and authorization in one call.
+    /// Recommended for most microservices.
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <param name="configuration">Application configuration</param>
+    /// <returns>Service collection for chaining</returns>
+    public static IServiceCollection AddKeycloakAuthenticationAndAuthorization(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        public List<string>? Roles { get; set; }
+        services.AddKeycloakAuthentication(configuration);
+        services.AddKeycloakRoleAuthorization(configuration);
+        return services;
+    }
+
+    private static void ValidateKeycloakConfiguration(IConfiguration configuration)
+    {
+        var section = configuration.GetSection(KeycloakAuthOptions.SectionName);
+        
+        if (!section.Exists())
+        {
+            throw new InvalidOperationException(
+                $"Keycloak configuration section '{KeycloakAuthOptions.SectionName}' not found. " +
+                "Expected configuration: Keycloak:AuthServerUrl, Keycloak:Realm, Keycloak:Resource");
+        }
+
+        var authServerUrl = section["AuthServerUrl"];
+        var realm = section["Realm"];
+        var resource = section["Resource"];
+
+        if (string.IsNullOrWhiteSpace(authServerUrl))
+            throw new InvalidOperationException("Keycloak:AuthServerUrl is required");
+        
+        if (string.IsNullOrWhiteSpace(realm))
+            throw new InvalidOperationException("Keycloak:Realm is required");
+        
+        if (string.IsNullOrWhiteSpace(resource))
+            throw new InvalidOperationException("Keycloak:Resource is required");
+    }
+
+    private static void ConfigureJwtBearerOptions(JwtBearerOptions options)
+    {
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetService<ILogger<JwtBearerEvents>>();
+                var userName = context.Principal?.Identity?.Name ?? "anonymous";
+                var roles = context.Principal?.Claims
+                    .Where(c => c.Type == ClaimTypes.Role || c.Type == "roles")
+                    .Select(c => c.Value)
+                    .ToList() ?? [];
+
+                logger?.LogDebug(
+                    "Token validated for user {UserName} with {RoleCount} roles: [{Roles}]",
+                    userName,
+                    roles.Count,
+                    string.Join(", ", roles));
+
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetService<ILogger<JwtBearerEvents>>();
+                
+                logger?.LogWarning(
+                    context.Exception,
+                    "Authentication failed: {ExceptionType} - {Message}",
+                    context.Exception.GetType().Name,
+                    context.Exception.Message);
+
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetService<ILogger<JwtBearerEvents>>();
+                
+                logger?.LogDebug(
+                    "Authentication challenge for {Method} {Path}",
+                    context.Request.Method,
+                    context.Request.Path);
+
+                return Task.CompletedTask;
+            },
+            OnMessageReceived = context =>
+            {
+                // SignalR/WebSocket token from query string support
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     }
 }
-

@@ -59,17 +59,29 @@ public static class ServiceCollectionExtensions
     /// - Auditable entity interceptor
     /// - System clock
     /// - Feature flags
+    /// - DbContext registration for Repository pattern
     /// </summary>
     /// <typeparam name="TContext">DbContext type</typeparam>
     /// <param name="services">Service collection</param>
+    /// <param name="includeAuditInterceptor">Whether to include AuditableEntityInterceptor (requires ICurrentUserService)</param>
     /// <returns>Service collection for chaining</returns>
-    public static IServiceCollection AddBuildingBlocksInfrastructure<TContext>(this IServiceCollection services)
+    public static IServiceCollection AddBuildingBlocksInfrastructure<TContext>(
+        this IServiceCollection services,
+        bool includeAuditInterceptor = true)
         where TContext : DbContext
     {
         services.AddSingleton<IClock, SystemClock>();
-        services.AddAuditableEntityInterceptor();
+        
+        if (includeAuditInterceptor)
+        {
+            services.AddAuditableEntityInterceptor();
+        }
+        
         services.AddRepositories<TContext>();
         services.AddFeatureFlags();
+        
+        // Register TContext as DbContext for Repository<T> dependency
+        services.AddScoped<DbContext>(sp => sp.GetRequiredService<TContext>());
 
         return services;
     }

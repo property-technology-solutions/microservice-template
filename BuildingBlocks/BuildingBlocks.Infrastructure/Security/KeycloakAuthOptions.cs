@@ -1,47 +1,70 @@
 namespace BuildingBlocks.Infrastructure.Security;
 
 /// <summary>
-/// Keycloak authentication configuration options
+/// Keycloak authentication configuration options.
+/// Compatible with Keycloak.AuthServices.Authentication package.
+/// 
+/// appsettings.json example:
+/// "Keycloak": {
+///   "AuthServerUrl": "https://keycloak.example.com",
+///   "Realm": "MyRealm",
+///   "Resource": "my-api-client",
+///   "VerifyTokenAudience": true,
+///   "Credentials": { "Secret": "client-secret" }
+/// }
 /// </summary>
 public class KeycloakAuthOptions
 {
     public const string SectionName = "Keycloak";
 
     /// <summary>
-    /// Keycloak server URL (e.g., https://keycloak.example.com)
+    /// Keycloak server base URL (e.g., https://keycloak.example.com)
     /// </summary>
-    public string Authority { get; set; } = string.Empty;
+    public string AuthServerUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Realm name in Keycloak
+    /// Keycloak realm name
     /// </summary>
     public string Realm { get; set; } = string.Empty;
 
     /// <summary>
-    /// Client ID registered in Keycloak
+    /// Client ID (resource) registered in Keycloak
     /// </summary>
-    public string ClientId { get; set; } = string.Empty;
+    public string Resource { get; set; } = string.Empty;
 
     /// <summary>
-    /// Client secret (for confidential clients)
+    /// Verify token audience claim. Default: true
     /// </summary>
-    public string? ClientSecret { get; set; }
+    public bool VerifyTokenAudience { get; set; } = true;
 
     /// <summary>
-    /// Whether to require HTTPS metadata
-    /// Set to false for development
+    /// SSL requirement level: "none", "external", "all". Default: external
     /// </summary>
-    public bool RequireHttpsMetadata { get; set; } = true;
+    public string SslRequired { get; set; } = "external";
 
     /// <summary>
-    /// Validate audience in JWT token
+    /// Token clock skew tolerance for validation
     /// </summary>
-    public bool ValidateAudience { get; set; } = true;
+    public TimeSpan TokenClockSkew { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// Role claim type in JWT token
-    /// Default: "realm_access.roles" for Keycloak
+    /// Whether this is a confidential client (has client secret)
     /// </summary>
-    public string RoleClaimType { get; set; } = "realm_access.roles";
+    public bool ConfidentialPort { get; set; }
+
+    /// <summary>
+    /// Client credentials configuration
+    /// </summary>
+    public KeycloakCredentials? Credentials { get; set; }
 }
 
+/// <summary>
+/// Keycloak client credentials for confidential clients
+/// </summary>
+public class KeycloakCredentials
+{
+    /// <summary>
+    /// Client secret for confidential clients
+    /// </summary>
+    public string? Secret { get; set; }
+}
