@@ -109,4 +109,30 @@ public class HakusController : BaseApiController
         var featured = result.Value!.Items.Where(h => h.IsFeatured).ToList();
         return ApiOk(featured, "Featured Hakus retrieved successfully.");
     }
+
+    /// <summary>
+    /// Admin-only endpoint example (RBAC).
+    /// Requires "Admin" role from Keycloak realm_access or resource_access.
+    /// </summary>
+    /// <returns>Admin statistics</returns>
+    [HttpGet("admin/stats")]
+    [Authorize(Policy = "Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetAdminStats()
+    {
+        var result = await _sender.Send(new GetHakuListQuery(1, 1000, null));
+
+        if (result.IsFailure)
+            return ApiBadRequest(result.Errors);
+
+        var stats = new
+        {
+            TotalRecords = result.Value!.TotalRecords,
+            FeaturedCount = result.Value.Items.Count(h => h.IsFeatured),
+            RetrievedAt = DateTime.UtcNow
+        };
+
+        return ApiOk(stats, "Admin statistics retrieved successfully.");
+    }
 }
