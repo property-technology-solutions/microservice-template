@@ -7,9 +7,8 @@
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
-    <!-- Use ProjectReference for local development, will be NuGet in template -->
     <ItemGroup>
-        <ProjectReference Include="../../../../BuildingBlocks/BuildingBlocks.Domain/BuildingBlocks.Domain.csproj" />
+        <PackageReference Include="Enterprise.BuildingBlocks.Domain" />
     </ItemGroup>
 
 </Project>
