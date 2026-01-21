@@ -2,8 +2,15 @@ name: Release BuildingBlocks
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [main]
+    paths:
+      - 'BuildingBlocks/**'
+      - 'Directory.Packages.props'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 2.2.0)'
+        required: true
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -27,10 +34,17 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Extract Version from Tag
+      - name: Extract Version
         id: version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # Auto-generate version from csproj + timestamp
+            BASE_VERSION=$(grep -oP '(?<=<Version>)[^<]+' BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj | head -1)
+            # Add build number for auto releases
+            VERSION="${BASE_VERSION}.$(date +%Y%m%d%H%M)"
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Publishing version: $VERSION"
 
