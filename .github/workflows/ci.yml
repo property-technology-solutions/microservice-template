@@ -38,6 +38,9 @@ jobs:
     name: Template Test
     runs-on: ubuntu-latest
     needs: build
+    # Template requires Enterprise.BuildingBlocks NuGet packages to be published first
+    # Enable this job after packages are available on NuGet feed
+    if: false
     
     steps:
       - name: Checkout
