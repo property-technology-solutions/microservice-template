@@ -13,7 +13,14 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!-- Local development: Use ProjectReference when BuildingBlocks exists -->
+    <ItemGroup Condition="Exists('../../../../BuildingBlocks/BuildingBlocks.Application/BuildingBlocks.Application.csproj')">
+        <ProjectReference Include="../../../../BuildingBlocks/BuildingBlocks.Application/BuildingBlocks.Application.csproj" />
+        <ProjectReference Include="../../../../BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj" />
+    </ItemGroup>
+    
+    <!-- Template usage: Use NuGet when generated standalone -->
+    <ItemGroup Condition="!Exists('../../../../BuildingBlocks/BuildingBlocks.Application/BuildingBlocks.Application.csproj')">
         <PackageReference Include="Enterprise.BuildingBlocks.Application" />
         <PackageReference Include="Enterprise.BuildingBlocks.Infrastructure" />
     </ItemGroup>

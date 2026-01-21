@@ -17,7 +17,13 @@
         <PackageReference Include="EFCore.NamingConventions" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!-- Local development: Use ProjectReference when BuildingBlocks exists -->
+    <ItemGroup Condition="Exists('../../../../BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj')">
+        <ProjectReference Include="../../../../BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj" />
+    </ItemGroup>
+    
+    <!-- Template usage: Use NuGet when generated standalone -->
+    <ItemGroup Condition="!Exists('../../../../BuildingBlocks/BuildingBlocks.Infrastructure/BuildingBlocks.Infrastructure.csproj')">
         <PackageReference Include="Enterprise.BuildingBlocks.Infrastructure" />
     </ItemGroup>
 
